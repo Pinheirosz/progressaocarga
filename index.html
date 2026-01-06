@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gym Log</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    body { margin: 0; background: #0b0b10; color: #f2f2f6; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 20px; }
+    .card { background:#141425; border:1px solid #242447; border-radius:14px; padding:16px; }
+    h1 { margin: 0 0 12px; font-size: 22px; }
+    .grid { display:grid; grid-template-columns: 1.2fr .6fr .6fr .6fr; gap:10px; }
+    label { font-size: 12px; opacity:.9; display:block; margin-bottom:6px; }
+    input { width:100%; padding:10px; border-radius:10px; border:1px solid #2b2b55; background:#0f0f1f; color:#fff; }
+    button { padding:10px 12px; border-radius:10px; border:1px solid #2b2b55; background:#1d1d3a; color:#fff; cursor:pointer; }
+    button:hover { filter: brightness(1.08); }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .row.right { justify-content: space-between; }
+    .muted { opacity:.75; font-size: 12px; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { text-align:left; padding:10px; border-bottom:1px solid #242447; font-size: 14px; }
+    th { font-size: 12px; opacity:.85; }
+    .danger { background:#2a1420; border-color:#5a2b44; }
+    .ok { background:#13261c; border-color:#2b5a41; }
+    .pill { display:inline-block; padding:4px 8px; border-radius:999px; background:#0f0f1f; border:1px solid #2b2b55; font-size:12px; }
+    .spacer { height: 12px; }
+    textarea { width:100%; min-height:120px; border-radius:10px; border:1px solid #2b2b55; background:#0f0f1f; color:#fff; padding:10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Gym Log <span class="pill">salva no seu aparelho</span></h1>
+      <p class="muted">
+        Clique em <b>Salvar</b> para guardar. Os dados ficam no seu navegador (localStorage).
+      </p>
+
+      <div class="grid" style="margin-top:12px;">
+        <div>
+          <label>Nome do exercício</label>
+          <input id="name" placeholder="Ex.: Supino reto" />
+        </div>
+        <div>
+          <label>Peso (kg)</label>
+          <input id="weight" type="number" step="0.5" placeholder="Ex.: 60" />
+        </div>
+        <div>
+          <label>Primeira série</label>
+          <input id="firstSet" type="number" placeholder="Ex.: 12" />
+        </div>
+        <div>
+          <label>Última série</label>
+          <input id="lastSet" type="number" placeholder="Ex.: 8" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <button class="ok" id="saveBtn">Salvar</button>
+        <button id="clearFormBtn">Limpar campos</button>
+        <span class="muted" id="status"></span>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="card">
+      <div class="row right">
+        <div>
+          <h1 style="margin:0;">Registros</h1>
+          <div class="muted" id="count"></div>
+        </div>
+        <div class="row">
+          <input id="search" placeholder="Buscar exercício..." style="min-width: 240px;" />
+          <button class="danger" id="wipeBtn">Limpar tudo</button>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div style="overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Exercício</th>
+              <th>Peso</th>
+              <th>1ª série</th>
+              <th>Última</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="card">
+      <h1>Backup (opcional)</h1>
+      <p class="muted">Exporta/Importa seus dados em JSON (pra levar pra outro celular/PC).</p>
+      <div class="row">
+        <button id="exportBtn">Exportar</button>
+        <button id="importBtn">Importar</button>
+      </div>
+      <div class="spacer"></div>
+      <textarea id="backupArea" placeholder="Aqui aparece o JSON do backup..."></textarea>
+      <p class="muted">Dica: cole o JSON num lugar seguro (Drive/WhatsApp/Notas) e depois importe.</p>
+    </div>
+  </div>
+
+<script>
+  const KEY = "gym_log_entries_v1";
+
+  const els = {
+    name: document.getElementById("name"),
+    weight: document.getElementById("weight"),
+    firstSet: document.getElementById("firstSet"),
+    lastSet: document.getElementById("lastSet"),
+    saveBtn: document.getElementById("saveBtn"),
+    clearFormBtn: document.getElementById("clearFormBtn"),
+    status: document.getElementById("status"),
+    tbody: document.getElementById("tbody"),
+    count: document.getElementById("count"),
+    wipeBtn: document.getElementById("wipeBtn"),
+    search: document.getElementById("search"),
+    exportBtn: document.getElementById("exportBtn"),
+    importBtn: document.getElementById("importBtn"),
+    backupArea: document.getElementById("backupArea"),
+  };
+
+  function nowIso() {
+    return new Date().toISOString();
+  }
+
+  function load() {
+    try {
+      return JSON.parse(localStorage.getItem(KEY) || "[]");
+    } catch {
+      return [];
+    }
+  }
+
+  function saveAll(entries) {
+    localStorage.setItem(KEY, JSON.stringify(entries));
+  }
+
+  function setStatus(msg) {
+    els.status.textContent = msg;
+    clearTimeout(setStatus._t);
+    setStatus._t = setTimeout(() => (els.status.textContent = ""), 2000);
+  }
+
+  function clearForm() {
+    els.name.value = "";
+    els.weight.value = "";
+    els.firstSet.value = "";
+    els.lastSet.value = "";
+    els.name.focus();
+  }
+
+  function validate() {
+    const name = els.name.value.trim();
+    const weight = Number(els.weight.value);
+    const firstSet = Number(els.firstSet.value);
+    const lastSet = Number(els.lastSet.value);
+
+    if (!name) return "Informe o nome do exercício.";
+    if (!Number.isFinite(weight) || weight <= 0) return "Informe um peso válido.";
+    if (!Number.isInteger(firstSet) || firstSet <= 0) return "Informe a 1ª série (número inteiro).";
+    if (!Number.isInteger(lastSet) || lastSet <= 0) return "Informe a última série (número inteiro).";
+    return null;
+  }
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  }
+
+  function render() {
+    const q = els.search.value.trim().toLowerCase();
+    const entries = load();
+
+    const filtered = q
+      ? entries.filter(e => e.name.toLowerCase().includes(q))
+      : entries;
+
+    els.count.textContent = `${filtered.length} registro(s) mostrado(s) • ${entries.length} total`;
+
+    els.tbody.innerHTML = filtered.map(e => `
+      <tr>
+        <td>${formatDate(e.createdAt)}</td>
+        <td>${escapeHtml(e.name)}</td>
+        <td>${e.weight} kg</td>
+        <td>${e.firstSet}</td>
+        <td>${e.lastSet}</td>
+        <td><button class="danger" data-del="${e.id}">Excluir</button></td>
+      </tr>
+    `).join("");
+
+    document.querySelectorAll("[data-del]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-del");
+        const next = load().filter(e => e.id !== id);
+        saveAll(next);
+        render();
+        setStatus("Excluído.");
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  els.saveBtn.addEventListener("click", () => {
+    const err = validate();
+    if (err) return setStatus(err);
+
+    const entry = {
+      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+      name: els.name.value.trim(),
+      weight: Number(els.weight.value),
+      firstSet: Number(els.firstSet.value),
+      lastSet: Number(els.lastSet.value),
+      createdAt: nowIso(),
+    };
+
+    const entries = load();
+    entries.unshift(entry);
+    saveAll(entries);
+    render();
+    clearForm();
+    setStatus("Salvo ✅");
+  });
+
+  els.clearFormBtn.addEventListener("click", clearForm);
+
+  els.wipeBtn.addEventListener("click", () => {
+    if (!confirm("Tem certeza que quer apagar tudo?")) return;
+    saveAll([]);
+    render();
+    setStatus("Tudo limpo.");
+  });
+
+  els.search.addEventListener("input", render);
+
+  // Backup
+  els.exportBtn.addEventListener("click", () => {
+    els.backupArea.value = JSON.stringify(load(), null, 2);
+    els.backupArea.focus();
+    els.backupArea.select();
+    setStatus("Backup exportado.");
+  });
+
+  els.importBtn.addEventListener("click", () => {
+    try {
+      const data = JSON.parse(els.backupArea.value || "[]");
+      if (!Array.isArray(data)) throw new Error("JSON inválido");
+      saveAll(data);
+      render();
+      setStatus("Backup importado ✅");
+    } catch {
+      setStatus("Falha ao importar: JSON inválido.");
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
