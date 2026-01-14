@@ -3,86 +3,297 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gym Log</title>
+  <title>Progressão de Carga</title>
   <style>
-    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    body { margin: 0; background: #0b0b10; color: #f2f2f6; }
+    :root { 
+      --bg: #0b0b10;
+      --bg-card: #141425;
+      --border: #242447;
+      --text: #f2f2f6;
+      --text-muted: #a0a0a8;
+      --primary: #4ade80;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+    
+    body.light-mode {
+      --bg: #f5f5f7;
+      --bg-card: #ffffff;
+      --border: #e5e5e7;
+      --text: #1d1d1f;
+      --text-muted: #666666;
+    }
+    
+    body { 
+      margin: 0; 
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
     .wrap { max-width: 860px; margin: 0 auto; padding: 20px; }
-    .card { background:#141425; border:1px solid #242447; border-radius:14px; padding:16px; }
+    .card { 
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.3s ease;
+    }
+    .card:hover {
+      box-shadow: 0 8px 24px rgba(74, 222, 128, 0.1);
+    }
     h1 { margin: 0 0 12px; font-size: 22px; }
-    .grid { display:grid; grid-template-columns: 1.2fr .6fr .6fr .6fr; gap:12px; }
+    .form-section { background: var(--bg); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
+    .grid { display: grid; grid-template-columns: 1.2fr .6fr .6fr .6fr; gap: 12px; }
     @media (max-width: 768px) {
       .grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .exercise-card {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 12px;
+      }
+      .exercise-card-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .exercise-card-label {
+        font-size: 11px;
+        opacity: 0.6;
+      }
+      .exercise-card-value {
+        font-weight: 600;
+      }
+      .exercise-card-buttons {
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      table { display: none; }
+      #tbody { display: contents; }
     }
     @media (max-width: 480px) {
       .grid { grid-template-columns: 1fr; gap: 12px; }
+      button { padding: 10px 12px; font-size: 14px; }
     }
-    label { font-size: 12px; opacity:.9; display:block; margin-bottom:8px; }
-    input { width:100%; padding:10px; border-radius:10px; border:1px solid #2b2b55; background:#0f0f1f; color:#fff; box-sizing: border-box; }
-    button { padding:10px 12px; border-radius:10px; border:1px solid #2b2b55; background:#1d1d3a; color:#fff; cursor:pointer; }
-    button:hover { filter: brightness(1.08); }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .row.right { justify-content: space-between; }
-    .muted { opacity:.75; font-size: 12px; }
-    table { width:100%; border-collapse: collapse; }
-    th, td { text-align:left; padding:10px; border-bottom:1px solid #242447; font-size: 14px; }
-    th { font-size: 12px; opacity:.85; }
-    .danger { background:#2a1420; border-color:#5a2b44; }
-    .ok { background:#13261c; border-color:#2b5a41; }
-    .pill { display:inline-block; padding:4px 8px; border-radius:999px; background:#0f0f1f; border:1px solid #2b2b55; font-size:12px; }
+    label { font-size: 12px; opacity: .9; display: block; margin-bottom: 6px; font-weight: 500; }
+    input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 14px; }
+    input:focus { outline: none; border-color: var(--primary); background: var(--bg-card); }
+    button { 
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #1d1d3a;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .ok { background: #13261c; border-color: #2b5a41; }
+    .ok:hover { background: #1a361f; }
+    .danger { background: #2a1420; border-color: #5a2b44; }
+    .danger:hover { background: #3a1430; }
+    .pill { display: inline-block; padding: 4px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); font-size: 12px; }
+    .muted { opacity: .75; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+    th { font-size: 12px; opacity: .85; font-weight: 600; }
+    tbody tr:hover { background: var(--bg); }
     .spacer { height: 12px; }
-    textarea { width:100%; min-height:120px; border-radius:10px; border:1px solid #2b2b55; background:#0f0f1f; color:#fff; padding:10px; box-sizing: border-box; }
+    textarea { width: 100%; min-height: 120px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); padding: 10px; box-sizing: border-box; font-size: 12px; }
+    textarea:focus { outline: none; border-color: var(--primary); }
+    .status-msg { padding: 10px 12px; border-radius: 8px; margin-top: 8px; animation: slideIn 0.3s ease; }
+    .status-msg.success { background: #13261c; border-left: 3px solid #2b5a41; }
+    .status-msg.error { background: #2a1420; border-left: 3px solid #5a2b44; }
+    .input-group { display: flex; flex-direction: column; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    
+    /* Animações */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+    }
+
+    .exercise-card.removing {
+      animation: fadeOut 0.3s ease forwards;
+    }
+
+    tbody tr.removing {
+      animation: fadeOut 0.3s ease forwards;
+    }
+
+    /* Tooltip */
+    [data-tooltip] {
+      position: relative;
+    }
+
+    [data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: #4ade80;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      white-space: nowrap;
+      z-index: 1001;
+      pointer-events: none;
+      animation: slideIn 0.2s ease;
+    }
+
+    [data-tooltip]:hover::before {
+      content: '';
+      position: absolute;
+      bottom: 115%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top: 5px solid rgba(0, 0, 0, 0.9);
+      z-index: 1001;
+    }
+
+    /* Scroll suave */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      z-index: 100;
+      transition: all 0.3s;
+    }
+    .theme-toggle:hover {
+      transform: scale(1.1);
+      border-color: var(--primary);
+    }
+
+    /* Gráfico */
+    .chart-container {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 12px 0;
+      border: 1px solid var(--border);
+    }
+    .chart-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+    }
+    .chart-label {
+      width: 80px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .chart-fill {
+      height: 20px;
+      background: linear-gradient(90deg, var(--primary), #86efac);
+      border-radius: 4px;
+      min-width: 20px;
+      transition: width 0.3s;
+    }
+    .chart-value {
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 30px;
+    }
   </style>
 </head>
 <body>
+  <button class="theme-toggle" id="themeToggle">🌙</button>
+
   <div class="wrap">
+    <!-- Seção de formulário -->
     <div class="card">
-      <h1>Gym Log <span class="pill">salva no seu aparelho</span></h1>
-      <p class="muted">
-        Clique em <b>Salvar</b> para guardar. Os dados ficam no seu navegador (localStorage).
-      </p>
+      <h1>Progressão de Carga <span class="pill">salva no seu aparelho</span></h1>
+      <p class="muted">Adicione seus exercícios abaixo e clique em Salvar para registrar.</p>
 
-      <div class="grid" style="margin-top:12px;">
-        <div>
-          <label>Nome do exercício</label>
-          <input id="name" placeholder="Ex.: Supino reto" />
+      <div class="form-section">
+        <div class="grid" style="margin-bottom:12px;">
+          <div class="input-group">
+            <label>🏋️ Nome do exercício</label>
+            <input id="name" placeholder="Ex.: Supino reto" autocomplete="off" />
+          </div>
+          <div class="input-group">
+            <label>⚖️ Peso (kg)</label>
+            <input id="weight" type="number" step="0.5" placeholder="Ex.: 60" />
+          </div>
+          <div class="input-group">
+            <label>➡️ 1ª série</label>
+            <input id="firstSet" type="number" placeholder="Ex.: 12" />
+          </div>
+          <div class="input-group">
+            <label>⬅️ Última série</label>
+            <input id="lastSet" type="number" placeholder="Ex.: 8" />
+          </div>
         </div>
-        <div>
-          <label>Peso (kg)</label>
-          <input id="weight" type="number" step="0.5" placeholder="Ex.: 60" />
-        </div>
-        <div>
-          <label>Primeira série</label>
-          <input id="firstSet" type="number" placeholder="Ex.: 12" />
-        </div>
-        <div>
-          <label>Última série</label>
-          <input id="lastSet" type="number" placeholder="Ex.: 8" />
-        </div>
-      </div>
 
-      <div class="row" style="margin-top:12px;">
-        <button class="ok" id="saveBtn">Salvar</button>
-        <button id="clearFormBtn">Limpar campos</button>
-        <span class="muted" id="status"></span>
+        <div class="row" style="gap:8px;">
+          <button class="ok" id="saveBtn" data-tooltip="Salvar novo exercício ou atualizar">✅ Salvar exercício</button>
+          <button id="clearFormBtn" data-tooltip="Limpar todos os campos">🔄 Limpar campos</button>
+        </div>
+        <div id="statusContainer"></div>
       </div>
     </div>
 
     <div class="spacer"></div>
 
+    <!-- Seção de registros -->
     <div class="card">
-      <div class="row right">
-        <div>
-          <h1 style="margin:0;">Registros</h1>
-          <div class="muted" id="count"></div>
-        </div>
+      <h1>📋 Seus registros</h1>
+      <div class="muted" id="count" style="margin-bottom:12px;"></div>
+
+      <div style="margin-bottom:12px;">
+        <label style="margin-bottom:8px; display:block;">🔍 Buscar exercício</label>
         <div class="row">
-          <input id="search" placeholder="Buscar exercício..." style="min-width: 240px;" />
-          <button class="danger" id="wipeBtn">Limpar tudo</button>
+          <input id="search" placeholder="Digite o nome do exercício..." style="flex:1; min-width:0;" />
+          <button class="danger" id="wipeBtn" data-tooltip="Deletar todos os registros">🗑️ Limpar tudo</button>
         </div>
       </div>
 
-      <div class="spacer"></div>
+      <!-- Gráfico de progressão -->
+      <div id="chartContainer" style="display:none;">
+        <h3 style="margin: 0 0 12px; font-size: 14px; font-weight: 600;">📊 Progressão de Peso</h3>
+        <div id="chart" class="chart-container"></div>
+      </div>
 
       <div style="overflow:auto;">
         <table>
@@ -103,21 +314,24 @@
 
     <div class="spacer"></div>
 
+    <!-- Seção de backup -->
     <div class="card">
-      <h1>Backup (opcional)</h1>
-      <p class="muted">Exporta/Importa seus dados em JSON (pra levar pra outro celular/PC).</p>
-      <div class="row">
-        <button id="exportBtn">Exportar</button>
-        <button id="importBtn">Importar</button>
+      <h1>💾 Backup</h1>
+      <p class="muted">Exporta ou importa seus dados em JSON para usar em outro dispositivo.</p>
+      <div class="row" style="gap:8px; margin-bottom:12px;">
+        <button id="exportBtn" data-tooltip="Exportar dados em JSON">📥 Exportar dados</button>
+        <button id="importBtn" data-tooltip="Importar dados em JSON">📤 Importar dados</button>
       </div>
-      <div class="spacer"></div>
-      <textarea id="backupArea" placeholder="Aqui aparece o JSON do backup..."></textarea>
-      <p class="muted">Dica: cole o JSON num lugar seguro (Drive/WhatsApp/Notas) e depois importe.</p>
+      <textarea id="backupArea" placeholder="Seu JSON aparecerá aqui quando exportar..."></textarea>
+      <p class="muted" style="margin-top:12px;">💡 Dica: Copie o JSON para um lugar seguro (Drive, Email, etc) antes de restaurar.</p>
     </div>
   </div>
 
 <script>
   const KEY = "gym_log_entries_v1";
+  const THEME_KEY = "gym_log_theme";
+
+  let editingId = null;
 
   const els = {
     name: document.getElementById("name"),
@@ -126,7 +340,7 @@
     lastSet: document.getElementById("lastSet"),
     saveBtn: document.getElementById("saveBtn"),
     clearFormBtn: document.getElementById("clearFormBtn"),
-    status: document.getElementById("status"),
+    statusContainer: document.getElementById("statusContainer"),
     tbody: document.getElementById("tbody"),
     count: document.getElementById("count"),
     wipeBtn: document.getElementById("wipeBtn"),
@@ -134,7 +348,25 @@
     exportBtn: document.getElementById("exportBtn"),
     importBtn: document.getElementById("importBtn"),
     backupArea: document.getElementById("backupArea"),
+    themeToggle: document.getElementById("themeToggle"),
+    chartContainer: document.getElementById("chartContainer"),
+    chart: document.getElementById("chart"),
   };
+
+  function initTheme() {
+    const savedTheme = localStorage.getItem(THEME_KEY) || "dark";
+    if (savedTheme === "light") {
+      document.body.classList.add("light-mode");
+      els.themeToggle.textContent = "☀️";
+    }
+  }
+
+  els.themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("light-mode");
+    const isDark = !document.body.classList.contains("light-mode");
+    localStorage.setItem(THEME_KEY, isDark ? "dark" : "light");
+    els.themeToggle.textContent = isDark ? "🌙" : "☀️";
+  });
 
   function nowIso() {
     return new Date().toISOString();
@@ -142,8 +374,17 @@
 
   function load() {
     try {
-      return JSON.parse(localStorage.getItem(KEY) || "[]");
+      const data = JSON.parse(localStorage.getItem(KEY) || "[]");
+      if (!Array.isArray(data)) throw new Error("Dados inválidos");
+      data.forEach(e => {
+        if (!e.id || !e.name || typeof e.weight !== 'number' || !e.createdAt) {
+          throw new Error("Registro corrompido");
+        }
+      });
+      return data;
     } catch {
+      console.warn("Dados locais corrompidos, limpando...");
+      localStorage.removeItem(KEY);
       return [];
     }
   }
@@ -152,10 +393,10 @@
     localStorage.setItem(KEY, JSON.stringify(entries));
   }
 
-  function setStatus(msg) {
-    els.status.textContent = msg;
+  function setStatus(msg, isError = false) {
+    els.statusContainer.innerHTML = `<div class="status-msg ${isError ? 'error' : 'success'}">${msg}</div>`;
     clearTimeout(setStatus._t);
-    setStatus._t = setTimeout(() => (els.status.textContent = ""), 2000);
+    setStatus._t = setTimeout(() => (els.statusContainer.innerHTML = ""), 3000);
   }
 
   function clearForm() {
@@ -163,6 +404,8 @@
     els.weight.value = "";
     els.firstSet.value = "";
     els.lastSet.value = "";
+    editingId = null;
+    els.saveBtn.textContent = "✅ Salvar exercício";
     els.name.focus();
   }
 
@@ -181,7 +424,45 @@
 
   function formatDate(iso) {
     const d = new Date(iso);
-    return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+    const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const diaSemana = diasSemana[d.getDay()];
+    const hora = d.toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' });
+    return `${diaSemana} • ${hora}`;
+  }
+
+  function renderChart() {
+    const entries = load();
+    const exerciseMap = {};
+
+    entries.forEach(e => {
+      if (!exerciseMap[e.name]) {
+        exerciseMap[e.name] = [];
+      }
+      exerciseMap[e.name].push(e.weight);
+    });
+
+    if (Object.keys(exerciseMap).length === 0) {
+      els.chartContainer.style.display = "none";
+      return;
+    }
+
+    els.chartContainer.style.display = "block";
+    const maxWeight = Math.max(...Object.values(exerciseMap).map(w => Math.max(...w)));
+
+    let html = '';
+    Object.entries(exerciseMap).forEach(([name, weights]) => {
+      const latest = weights[0];
+      const percentage = (latest / maxWeight) * 100;
+      html += `
+        <div class="chart-bar">
+          <div class="chart-label">${escapeHtml(name)}</div>
+          <div class="chart-fill" style="width: ${percentage}%;"></div>
+          <div class="chart-value">${latest}kg</div>
+        </div>
+      `;
+    });
+
+    els.chart.innerHTML = html;
   }
 
   function render() {
@@ -194,24 +475,128 @@
 
     els.count.textContent = `${filtered.length} registro(s) mostrado(s) • ${entries.length} total`;
 
-    els.tbody.innerHTML = filtered.map(e => `
-      <tr>
-        <td>${formatDate(e.createdAt)}</td>
-        <td>${escapeHtml(e.name)}</td>
-        <td>${e.weight} kg</td>
-        <td>${e.firstSet}</td>
-        <td>${e.lastSet}</td>
-        <td><button class="danger" data-del="${e.id}">Excluir</button></td>
-      </tr>
-    `).join("");
+    if (filtered.length === 0) {
+      els.tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; opacity:0.5; padding:24px;">Nenhum registro encontrado</td></tr>`;
+      return;
+    }
+
+    const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const hoje = new Date().getDay();
+    
+    const diasOrdenados = [];
+    for (let i = 0; i < 7; i++) {
+      diasOrdenados.push((hoje + i) % 7);
+    }
+
+    const agrupado = {};
+    diasOrdenados.forEach(dia => {
+      agrupado[dia] = [];
+    });
+
+    filtered.forEach(e => {
+      const d = new Date(e.createdAt);
+      const dia = d.getDay();
+      if (!agrupado[dia]) agrupado[dia] = [];
+      agrupado[dia].push(e);
+    });
+
+    const isMobile = window.innerWidth <= 768;
+    let html = '';
+
+    diasOrdenados.forEach(dia => {
+      const exercicios = agrupado[dia];
+      if (exercicios.length > 0) {
+        if (!isMobile) {
+          html += `<tr style="background: rgba(74, 222, 128, 0.08); font-weight: 600;">
+            <td colspan="6" style="padding: 12px; border-bottom: 2px solid #4ade80;">📅 ${diasSemana[dia]}</td>
+          </tr>`;
+        }
+        
+        exercicios.forEach(e => {
+          if (isMobile) {
+            html += `<div class="exercise-card" data-id="${e.id}">
+              <div style="border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                <div style="font-size: 13px; opacity: 0.7; margin-bottom: 4px;">📅 ${diasSemana[dia]}</div>
+                <div style="font-weight: 700; font-size: 16px; color: #4ade80;">${escapeHtml(e.name)}</div>
+                <div style="font-size: 12px; opacity: 0.6; margin-top: 4px;">${formatDate(e.createdAt)}</div>
+              </div>
+              <div class="exercise-card-row">
+                <div>
+                  <div class="exercise-card-label">Peso</div>
+                  <div class="exercise-card-value">${e.weight} kg</div>
+                </div>
+                <div>
+                  <div class="exercise-card-label">1ª Série</div>
+                  <div class="exercise-card-value">${e.firstSet}</div>
+                </div>
+                <div>
+                  <div class="exercise-card-label">Última</div>
+                  <div class="exercise-card-value">${e.lastSet}</div>
+                </div>
+              </div>
+              <div class="exercise-card-buttons">
+                <button class="ok" style="flex: 1; font-size:12px; padding:8px;" data-dup="${e.id}" data-tooltip="Usar este exercício">📋 Usar</button>
+                <button class="danger" style="flex: 1; font-size:12px; padding:8px;" data-del="${e.id}" data-tooltip="Deletar registro">🗑️ Excluir</button>
+              </div>
+            </div>`;
+          } else {
+            html += `<tr data-id="${e.id}">
+              <td>${formatDate(e.createdAt)}</td>
+              <td><strong>${escapeHtml(e.name)}</strong></td>
+              <td>${e.weight} kg</td>
+              <td>${e.firstSet}</td>
+              <td>${e.lastSet}</td>
+              <td style="display:flex; gap:6px;">
+                <button class="ok" style="font-size:12px; padding:6px 10px;" data-dup="${e.id}" data-tooltip="Usar este exercício">📋 Usar</button>
+                <button class="danger" style="font-size:12px;" data-del="${e.id}" data-tooltip="Deletar registro">Excluir</button>
+              </td>
+            </tr>`;
+          }
+        });
+      }
+    });
+
+    els.tbody.innerHTML = html;
+    renderChart();
+
+    document.querySelectorAll("[data-dup]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-dup");
+        const entry = load().find(e => e.id === id);
+        if (entry) {
+          editingId = id;
+          els.name.value = entry.name;
+          els.weight.value = entry.weight;
+          els.firstSet.value = "";
+          els.lastSet.value = "";
+          els.saveBtn.textContent = "✏️ Atualizar exercício";
+          els.firstSet.focus();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setStatus("✅ Editando! Preencha kg e séries.");
+        }
+      });
+    });
 
     document.querySelectorAll("[data-del]").forEach(btn => {
       btn.addEventListener("click", () => {
+        if (!confirm("Tem certeza?")) return;
         const id = btn.getAttribute("data-del");
-        const next = load().filter(e => e.id !== id);
-        saveAll(next);
-        render();
-        setStatus("Excluído.");
+        const card = document.querySelector(`[data-id="${id}"]`);
+        
+        if (card) {
+          card.classList.add("removing");
+          setTimeout(() => {
+            const next = load().filter(e => e.id !== id);
+            saveAll(next);
+            render();
+            setStatus("✅ Exercício excluído.");
+          }, 300);
+        } else {
+          const next = load().filter(e => e.id !== id);
+          saveAll(next);
+          render();
+          setStatus("✅ Exercício excluído.");
+        }
       });
     });
   }
@@ -224,63 +609,108 @@
 
   els.saveBtn.addEventListener("click", () => {
     const err = validate();
-    if (err) return setStatus(err);
-
-    const entry = {
-      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-      name: els.name.value.trim(),
-      weight: Number(els.weight.value),
-      firstSet: Number(els.firstSet.value),
-      lastSet: Number(els.lastSet.value),
-      createdAt: nowIso(),
-    };
+    if (err) return setStatus("❌ " + err, true);
 
     const entries = load();
-    entries.unshift(entry);
-    saveAll(entries);
-    render();
-    clearForm();
-    setStatus("Salvo ✅");
+
+    if (editingId) {
+      const index = entries.findIndex(e => e.id === editingId);
+      if (index !== -1) {
+        entries[index].weight = Number(els.weight.value);
+        entries[index].firstSet = Number(els.firstSet.value);
+        entries[index].lastSet = Number(els.lastSet.value);
+        saveAll(entries);
+        render();
+        clearForm();
+        setStatus("✏️ Exercício atualizado!");
+      }
+    } else {
+      const entry = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        name: els.name.value.trim(),
+        weight: Number(els.weight.value),
+        firstSet: Number(els.firstSet.value),
+        lastSet: Number(els.lastSet.value),
+        createdAt: nowIso(),
+      };
+
+      entries.unshift(entry);
+      saveAll(entries);
+      render();
+      clearForm();
+      setStatus("✅ Exercício salvo com sucesso!");
+    }
   });
 
   els.clearFormBtn.addEventListener("click", clearForm);
 
   els.wipeBtn.addEventListener("click", () => {
-    if (!confirm("Tem certeza que quer apagar tudo?")) return;
+    if (!confirm("⚠️ Tem certeza que quer apagar TODOS os registros?")) return;
     saveAll([]);
     render();
-    setStatus("Tudo limpo.");
+    setStatus("🗑️ Todos os registros foram deletados.");
   });
 
   els.search.addEventListener("input", render);
 
-  // Backup
   els.exportBtn.addEventListener("click", () => {
     els.backupArea.value = JSON.stringify(load(), null, 2);
     els.backupArea.focus();
     els.backupArea.select();
-    setStatus("Backup exportado.");
+    setStatus("📥 Backup exportado! Copie o JSON acima.");
   });
 
   els.importBtn.addEventListener("click", () => {
-  const backupContent = els.backupArea.value.trim();
+    const backupContent = els.backupArea.value.trim();
+    
+    if (!backupContent) {
+      els.backupArea.style.borderColor = "#ef4444";
+      els.backupArea.focus();
+      setTimeout(() => {
+        els.backupArea.style.borderColor = "var(--border)";
+      }, 2000);
+      return;
+    }
+
+    try {
+      const data = JSON.parse(backupContent);
+      if (!Array.isArray(data)) throw new Error("JSON inválido");
+      saveAll(data);
+      render();
+      clearForm();
+      els.backupArea.value = "";
+      els.backupArea.style.borderColor = "#4ade80";
+      setTimeout(() => {
+        els.backupArea.style.borderColor = "var(--border)";
+      }, 2000);
+      setStatus("📤 Backup importado com sucesso!");
+    } catch {
+      els.backupArea.style.borderColor = "#ef4444";
+      setTimeout(() => {
+        els.backupArea.style.borderColor = "var(--border)";
+      }, 2000);
+      setStatus("❌ JSON inválido ou corrompido.", true);
+    }
+  });
+
+  // Enter entre campos
+  const inputFields = [els.name, els.weight, els.firstSet, els.lastSet];
   
-  if (!backupContent) {
-    setStatus("O Campo JSON não pode estar vazio!");
-    return;
-  }
+  inputFields.forEach((field, index) => {
+    field.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (index < inputFields.length - 1) {
+          inputFields[index + 1].focus();
+        } else {
+          els.saveBtn.click();
+        }
+      }
+    });
+  });
 
-  try {
-    const data = JSON.parse(backupContent);
-    if (!Array.isArray(data)) throw new Error("JSON inválido");
-    saveAll(data);
-    render();
-    setStatus("Backup importado ✅");
-  } catch {
-    setStatus("Falha ao importar: JSON inválido.");
-  }
-});
-
+  initTheme();
+  load();
   render();
 </script>
 </body>
